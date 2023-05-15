@@ -3,6 +3,7 @@ import React, { useState, useContext } from 'react';
 import GlobalContext from '../../../context/GlobalContext';
 import { useMutation } from 'react-query';
 import Axios from '../../../AxiosInstance';
+import { AxiosError } from 'axios';
 
 const RegisterForm = ({ setIsLogin = () => {} }) => {
   const [username, setUsername] = useState('');
@@ -15,7 +16,10 @@ const RegisterForm = ({ setIsLogin = () => {} }) => {
   const [rePasswordError, setRePasswordError] = useState('');
   const {setUser, setStatus} = useContext(GlobalContext);
 
-  const handleSubmit = () => {};
+  const handleSubmit = () => {
+    if (!validateForm())  return;
+    registerMutation.mutate();
+  };
 
   const registerMutation = useMutation(() => 
     Axios.post('/register', {
@@ -39,7 +43,18 @@ const RegisterForm = ({ setIsLogin = () => {} }) => {
       },
       onError: (error) => {
         setPassword('');
-      }
+        setRePassword('');
+        if (error instanceof AxiosError) 
+          if (error.response)
+            return setStatus({
+              msg: error.response.data.error,
+              severity: 'error',
+            });
+        return setStatus({
+          msg: error.message,
+          severity: 'error',
+        });
+      },
     });
   const validateForm = () => {
     let isValid = true;

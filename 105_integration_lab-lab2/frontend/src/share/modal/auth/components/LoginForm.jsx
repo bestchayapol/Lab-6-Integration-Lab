@@ -1,14 +1,56 @@
 import { Box, Link, TextField, Typography } from '@mui/material';
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
+import { useMutation } from 'react-query';
+import GlobalContext from '../../../context/GlobalContext';
+import Axios from '../../../AxiosInstance';
 
 const LoginForm = ({ handleClose = () => {}, setIsLogin = () => {} }) => {
   const [usernameOrEmail, setUsernameOrEmail] = useState('');
   const [usernameOrEmailError, setUsernameOrEmailError] = useState('');
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const { setUser, setStatus } = useContext(GlobalContext);
 
-  const handleSubmit = () => {};
+  const handleSubmit = async () => {
+    if (!validateForm())  return;
+    loginMutation.mutate();
+  };
 
+  const loginMutation = useMutation(
+    () => 
+    Axios.post('/login', {
+      usernameOrEmail,
+      password,
+    }),
+    {
+      onSuccess: (data) => {
+        if (data.data.success) {
+          setUser({
+            username: data.data.username,
+            email: data.data.email,
+          });
+          handleClose();
+          setStatus({
+            msg: data.data.msg,
+            severity: 'success',
+          });
+        }
+      },
+      onError: (error) => {
+        setUsernameOrEmail('');
+        setPassword('');
+        if (error instanceof AxiosError) 
+          if (error.response)
+            return setStatus({
+              msg: error.response.data.error,
+              severity: 'error',
+            });
+        return setStatus({
+          msg: error.message,
+          severity: 'error',
+        });
+      },
+    });
   const validateForm = () => {
     let isValid = true;
     if (!usernameOrEmail) {

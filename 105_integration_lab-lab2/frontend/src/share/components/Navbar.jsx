@@ -1,14 +1,20 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useContext, useState } from 'react';
 import { Box, Stack, Typography } from '@mui/material';
 import CustomButton from './CustomButton';
 import Axios from '../AxiosInstance';
 import Cookies from 'js-cookie';
+import GlobalContext from '../context/GlobalContext';
+import { useQuery } from 'react-query';
 
-const Navbar = ({ handleOpen = () => {}, user, setUser = () => {} }) => {
+const Navbar = ({ handleOpen = () => {} }) => {
+  const { user, setUser } = useContext(GlobalContext);
+  const [startFetch, setstartFetch] = useState(false);
+
   useEffect(() => {
     // TODO: Implement get user
     // 1. check if cookie is set
     const userToken = Cookies.get('UserToken');
+    setstartFetch(!(userToken == null || userToken == 'undefined'));
     if (userToken == null || userToken == 'undefined') return;
     // 2. send a request to server
     Axios.get('/me', {
@@ -22,13 +28,32 @@ const Navbar = ({ handleOpen = () => {}, user, setUser = () => {} }) => {
         email: res.data.data.email,
       });
     });
-  }, []);
+  }, [user]);
 
   const logout = () => {
     setUser();
     Cookies.remove('UserToken');
   };
 
+  const fetchUser = async () => {
+    const userToken = Cookies.get('UserToken');
+    return await Axios.get('/me', {
+      headers: {
+        Authorization: `Bearer ${userToken}`,
+      },
+    });
+  };
+
+  useQuery('user', fetchUser , {
+    onSuccess: (data) => {
+      setUser({
+        username: data.data.data.username,
+        email: data.data.data.email,
+      });
+    },
+    enabled: startFetch,
+  });
+  
   return (
     <Stack
       direction="row"

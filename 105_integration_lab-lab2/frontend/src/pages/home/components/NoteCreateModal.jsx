@@ -1,15 +1,17 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField } from '@mui/material';
 import Axios from '../../../share/AxiosInstance';
 import Cookies from 'js-cookie';
 import { AxiosError } from 'axios';
+import GlobalContext from '../../../share/context/GlobalContext';
 
-const NoteCreateModal = ({ open = false, handleClose = () => {}, setNotes = () => {}, setStatus = () => {} }) => {
+const NoteCreateModal = ({ open = false, handleClose = () => {}, setNotes = () => {} }) => {
   const [newNote, setNewNote] = useState({
     title: '',
     description: '',
   });
   const [error, setError] = useState({});
+  const { user, setStatus } = useContext(GlobalContext);
 
   const submit = async () => {
     if (!validateForm()) return;
@@ -22,14 +24,17 @@ const NoteCreateModal = ({ open = false, handleClose = () => {}, setNotes = () =
 
       if (response.data.success) {
         // TODO: show status of success here
+        setStatus({ severity: 'success', msg: 'Create note successfully'});
         setNotes((prev) => [...prev, response.data.data]);
         resetAndClose();
       }
     } catch (error) {
       if (error instanceof AxiosError && error.response) {
         // TODO: show status of error from AxiosError here
+        setStatus({ severity: 'error', msg: error.response.data.error});
       } else {
         // TODO: show status of other errors here
+        setStatus({ severity: 'error', msg: error.message});
       }
     }
   };

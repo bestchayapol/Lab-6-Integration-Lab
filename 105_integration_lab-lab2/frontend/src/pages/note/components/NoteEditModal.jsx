@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField } from '@mui/material';
 import Axios from '../../../share/AxiosInstance';
+import GlobalContext from '../../../share/context/GlobalContext';
 
 import { AxiosError } from 'axios';
 import Cookies from 'js-cookie';
@@ -8,6 +9,7 @@ import Cookies from 'js-cookie';
 const NoteEditModal = ({ note = {}, open = false, handleClose = () => {}, setNote = () => {} }) => {
   const [newNote, setNewNote] = useState(note);
   const [error, setError] = useState({});
+  const { user, setStatus } = useContext(GlobalContext);
 
   useEffect(() => {
     setNewNote(note);
@@ -31,14 +33,17 @@ const NoteEditModal = ({ note = {}, open = false, handleClose = () => {}, setNot
 
       if (response.data.success) {
         // TODO: show status of success here
+        setStatus({ severity: 'success', msg: 'Update note successfully'});
         setNote(response.data.data);
         resetAndClose();
       }
     } catch (error) {
       if (error instanceof AxiosError && error.response) {
         // TODO: show status of error from AxiosError here
+        setStatus({ severity: 'error', msg: error.response.data.error});
       } else {
         // TODO: show status of other errors here
+        setStatus({ severity: 'error', msg: error.message});
       }
     }
   };
